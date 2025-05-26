@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard - MFE Car Park Manager</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <style>
+    /* Gradient background for navbar */
+    .navbar-custom {
+      background: linear-gradient(90deg, #0d6efd, #6610f2);
+      box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+    }
+    /* Brand logo style */
+    .navbar-brand img {
+      border-radius: 0.5rem;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+      transition: transform 0.3s ease;
+    }
+    .navbar-brand img:hover {
+      transform: scale(1.1);
+    }
+    /* Nav link hover */
+    .nav-link {
+      transition: color 0.3s ease, background-color 0.3s ease;
+      border-radius: 0.375rem;
+      padding: 0.375rem 0.75rem;
+    }
+    .nav-link:hover, .nav-link.active {
+      background-color: rgba(255, 255, 255, 0.15);
+      color: #fff !important;
+    }
+    /* Navbar toggler border & color */
+    .navbar-dark .navbar-toggler {
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    .navbar-dark .navbar-toggler-icon {
+      filter: brightness(0) invert(1);
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard') }}">
+        <img src="{{ url_for('static', filename='images/mfe-logo.png') }}" alt="MFE Logo" height="40" class="me-2" />
+        MFE Car Park Manager
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('view_data') }}">View Data</a></li>
+          {% if user_role == 'Admin' %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('add_owner') }}">Add Owner</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('add_vehicle') }}">Add Vehicle</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('import_csv') }}">Import CSV</a></li>
+          {% endif %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="p-4 bg-light rounded shadow-sm mb-4">
+      <h1 class="display-5 fw-bold mb-3">Welcome, <span class="text-primary">{{ session['username'] }}</span>!</h1>
+      <p class="lead">
+        Your role: <span class="badge bg-info text-dark fs-6">{{ user_role }}</span>
+      </p>
+      <p class="mt-3 fs-5">
+        <em>Car Park Manager</em> is a streamlined vehicle and owner management system developed by the IT department exclusively for <strong>MFE Formwork Technology</strong> staff. It enables efficient parking oversight with secure role-based access, easy data import, and intuitive management tools, helping optimize daily operations.
+      </p>
+    </div>
+
+    <h2 class="mt-5 mb-3">Location Map</h2>
+    <div class="card shadow-sm">
+      <div class="ratio ratio-16x9 rounded">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15936.758957680308!2d101.3792888!3d3.04376835!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31cc5525b397b71f%3A0xd9d493f195eb3c65!2sMFE%20Formwork%20Technology%20Sdn.%20Bhd.!5e0!3m2!1sen!2smy!4v1747283234843!5m2!1sen!2smy"
+          style="border:0;"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+        ></iframe>
+      </div>
+      <div class="card-body text-center">
+        <p class="mb-0"><strong>MFE Formwork Technology Sdn. Bhd.</strong></p>
+        <small class="text-muted">3.0438° N, 101.3793° E</small>
+      </div>
+    </div>
+  </div>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+  ></script>
+</body>
+</html>

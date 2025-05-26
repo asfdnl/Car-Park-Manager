@@ -1,0 +1,44 @@
+<!-- templates/layout.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Car Park Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Car Park Manager</h1>
+        {% if session['username'] %}
+            <nav>
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('view_data') }}">View Data</a>
+                <a href="{{ url_for('add_vehicle') }}">Add Vehicle</a>
+                {% if session['user_role'] == 'Admin' %}
+                    <a href="{{ url_for('add_owner') }}">Add Owner</a>
+                    <a href="{{ url_for('import_csv') }}">Import CSV</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}">Logout ({{ session['username'] }})</a>
+            </nav>
+        {% endif %}
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; {{ 2025 }}</p>
+    </footer>
+</body>
+</html>

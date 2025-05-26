@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Import CSV - Vehicle Registry</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <style>
+    .navbar-custom {
+      background: linear-gradient(90deg, #0d6efd, #6610f2);
+      box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+    }
+    .navbar-brand img {
+      border-radius: 0.5rem;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .navbar-brand img:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 18px rgba(255, 255, 255, 0.8);
+    }
+    .nav-link {
+      transition: color 0.3s ease, background-color 0.3s ease;
+      border-radius: 0.375rem;
+      padding: 0.375rem 0.75rem;
+    }
+    .nav-link:hover, .nav-link.active {
+      background-color: rgba(255, 255, 255, 0.15);
+      color: #fff !important;
+    }
+    .navbar-dark .navbar-toggler {
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    .navbar-dark .navbar-toggler-icon {
+      filter: brightness(0) invert(1);
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard') }}">
+        <img src="{{ url_for('static', filename='images/mfe-logo.png') }}" alt="Logo" height="40" class="me-2" />
+        Vehicle Registry
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+          {% if user_role == 'Admin' %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('add_owner') }}">Add Owner</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('add_vehicle') }}">Add Vehicle</a></li>
+          <li class="nav-item"><a class="nav-link active" href="{{ url_for('import_csv') }}">Import CSV</a></li>
+          {% endif %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('view_data') }}">View Data</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <h2>Import Vehicles from CSV</h2>
+
+    <form method="post" enctype="multipart/form-data" class="mb-4">
+      <div class="mb-3">
+        <label for="csvFile" class="form-label">Select CSV file</label>
+        <input class="form-control" type="file" id="csvFile" name="file" accept=".csv" required />
+      </div>
+      <button type="submit" class="btn btn-primary">Upload and Import</button>
+    </form>
+
+    {% if log %}
+      <h4>Import Log</h4>
+      <ul class="list-group">
+        {% for entry in log %}
+          <li class="list-group-item">{{ entry }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+  ></script>
+</body>
+</html>
