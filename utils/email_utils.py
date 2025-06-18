@@ -5,8 +5,8 @@ from email.mime.text import MIMEText
 # Microsoft 365 SMTP configuration
 SMTP_SERVER = 'smtp.office365.com'
 SMTP_PORT = 587
-SENDER_EMAIL = 'AsifDanial@mfeformwork.com'
-SENDER_PASSWORD = 'lskwfrvjwpgmmyxq'
+SENDER_EMAIL = 'mfedoc@mfeformwork.com'
+SENDER_PASSWORD = 'Abcd@123456'
 
 def send_email_notification(receiver_email, owner_name, license_plate, location):
     """
