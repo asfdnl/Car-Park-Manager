@@ -15,8 +15,8 @@ def get_db_connection():
 @app.route('/')
 def home():
     if 'username' in session:
-        return redirect(url_for('dashboard'))
-    return redirect(url_for('login'))
+        return redirect(url_for('dashboard.html'))
+    return redirect(url_for('login.html'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -32,7 +32,7 @@ def login():
         if user:
             session['username'] = user['username']
             session['user_role'] = user['role']
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard.html'))
         else:
             flash("Invalid credentials", "danger")
     return render_template('login.html')
@@ -41,12 +41,12 @@ def login():
 def logout():
     session.clear()
     flash("Logged out successfully", "info")
-    return redirect(url_for('login'))
+    return redirect(url_for('login.html'))
 
 @app.route('/dashboard')
 def dashboard():
     if 'username' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('login.html'))
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -75,7 +75,7 @@ def add_owner():
     cur.close()
     conn.close()
     flash("Owner added", "success")
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('dashboard.html'))
 
 @app.route('/add_vehicle', methods=['POST'])
 def add_vehicle():
@@ -90,7 +90,7 @@ def add_vehicle():
     cur.close()
     conn.close()
     flash("Vehicle added", "success")
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('dashboard.html'))
 
 @app.route('/delete_vehicle/<license_plate>', methods=['POST'])
 def delete_vehicle(license_plate):
@@ -101,13 +101,13 @@ def delete_vehicle(license_plate):
     cur.close()
     conn.close()
     flash(f"Deleted vehicle {license_plate}", "warning")
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('dashboard.html'))
 
 @app.route('/notify_owner/<license_plate>', methods=['POST'])
 def notify_owner(license_plate):
     # Placeholder for actual notification logic (email, etc.)
     flash(f"Notification sent for vehicle {license_plate}", "info")
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('dashboard.html'))
 
 if __name__ == '__main__':
     app.run(debug=True)
