@@ -75,7 +75,7 @@ def add_owner():
     cur.close()
     conn.close()
     flash("Owner added", "success")
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('view-data'))
 
 @app.route('/add_vehicle', methods=['POST'])
 def add_vehicle():
@@ -90,7 +90,7 @@ def add_vehicle():
     cur.close()
     conn.close()
     flash("Vehicle added", "success")
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('view-data'))
 
 @app.route('/delete_vehicle/<license_plate>', methods=['POST'])
 def delete_vehicle(license_plate):
@@ -101,13 +101,19 @@ def delete_vehicle(license_plate):
     cur.close()
     conn.close()
     flash(f"Deleted vehicle {license_plate}", "warning")
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('view-data'))
 
 @app.route('/notify_owner/<license_plate>', methods=['POST'])
 def notify_owner(license_plate):
     # Placeholder for actual notification logic (email, etc.)
     flash(f"Notification sent for vehicle {license_plate}", "info")
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('view-data'))
+
+@app.route('/view-data')
+def view_data():
+    # You can customize what data to show here
+    return render_template('view_data.html')  # or whatever your template is
+
 
 if __name__ == '__main__':
     app.run(debug=True)
