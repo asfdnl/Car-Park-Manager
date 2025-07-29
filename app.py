@@ -130,11 +130,46 @@ def delete_vehicle(license_plate):
     flash(f"Deleted vehicle {license_plate}", "warning")
     return redirect(url_for('dashboard'))
 
-@app.route('/notify_owner/<license_plate>', methods=['POST'])
+from psycopg2.extras import RealDictCursor
+
+@app.route('/vehicle/notify/<license_plate>', methods=['POST'])
+@login_required
 def notify_owner(license_plate):
-    # Placeholder for actual notification logic (email, etc.)
-    flash(f"Notification sent for vehicle {license_plate}", "info")
-    return redirect(url_for('dashboard'))
+    if session['user_role'] != 'Admin':
+        flash("Access denied: Admins only.", "danger")
+        return redirect(url_for('view_data'))
+
+    with get_db_connection() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute('''
+            SELECT o.name, o.email, o.office_location, v.license_plate 
+            FROM vehicles v
+            JOIN owners o ON v.owner_id = o.id
+            WHERE v.license_plate = %s
+        ''', (license_plate,))
+        vehicle = cur.fetchone()
+        cur.close()
+
+    if not vehicle:
+        flash("Vehicle not found.", "warning")
+        return redirect(url_for('view_data'))
+
+    if not vehicle['email']:
+        flash("Owner email not available.", "warning")
+        return redirect(url_for('view_data'))
+
+    success, msg = send_email_notification(
+        receiver_email=vehicle['email'],
+        owner_name=vehicle['name'],
+        license_plate=vehicle['license_plate'],
+        location=vehicle['office_location']
+    )
+
+    flash(
+        f"Notification sent to {vehicle['name']}." if success else f"Failed to send: {msg}",
+        "success" if success else "danger"
+    )
+    return redirect(url_for('view_data'))
 
 @app.route('/import-csv', methods=['GET', 'POST'])
 def import_csv():
