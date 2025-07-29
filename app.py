@@ -2,12 +2,12 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import psycopg2
 import psycopg2.extras
+from dotenv import load_dotenv
 
-from supabase import create_client, Client
-# Initialize Supabase client
-SUPABASE_URL = os.environ.get("https://mzuozxmojdoimnkklcgg.supabase.co") # Replace with your Supabase URL
-SUPABASE_KEY = os.environ.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dW96eG1vamRvaW1ua2tsY2dnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NTczNzQsImV4cCI6MjA2OTMzMzM3NH0.iQzwCjPfXlSNYXljzZhpQfNavBDEndF45tWUlqaSGeY") # Replace with your Supabase Key
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev")  # Replace in production
