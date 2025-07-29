@@ -92,20 +92,32 @@ def add_owner():
 
     return render_template('add_owner.html')  # Show the form on GET
 
-@app.route('/add_vehicle', methods=['POST'])
+@app.route('/add_vehicle', methods=['GET', 'POST'])
 def add_vehicle():
-    license_plate = request.form['license_plate']
-    vehicle_type = request.form['vehicle_type']
-    owner_id = request.form['owner_id']
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("INSERT INTO vehicles (license_plate, vehicle_type, owner_id) VALUES (%s, %s, %s)", 
-                (license_plate, vehicle_type, owner_id))
-    conn.commit()
+    
+    if request.method == 'POST':
+        license_plate = request.form['license_plate']
+        vehicle_type = request.form['vehicle_type']
+        owner_id = request.form['owner_id']
+        
+        cur.execute(
+            "INSERT INTO vehicles (license_plate, vehicle_type, owner_id) VALUES (%s, %s, %s)",
+            (license_plate, vehicle_type, owner_id)
+        )
+        conn.commit()
+        flash('Vehicle added successfully', 'success')
+        return redirect(url_for('dashboard'))
+
+    # GET method: fetch owners to populate the dropdown
+    cur.execute("SELECT id, name FROM owners ORDER BY name ASC")
+    owners = [dict(id=row[0], name=row[1]) for row in cur.fetchall()]
     cur.close()
     conn.close()
-    flash("Vehicle added", "success")
-    return redirect(url_for('dashboard'))
+
+    return render_template('add_vehicle.html', owners=owners)
+
 
 @app.route('/delete_vehicle/<license_plate>', methods=['POST'])
 def delete_vehicle(license_plate):
