@@ -41,7 +41,7 @@ def login():
 def logout():
     session.clear()
     flash("Logged out successfully", "info")
-    return redirect(url_for('login.html'))
+    return redirect(url_for('login'))
 
 @app.route('/dashboard')
 def dashboard():
@@ -60,7 +60,7 @@ def dashboard():
     cur.close()
     conn.close()
 
-    return render_template('dashboard', data=data, user_role=session.get('user_role'))
+    return render_template('dashboard.html', data=data, user_role=session.get('user_role'))
 
 @app.route('/add_owner', methods=['POST'])
 def add_owner():
