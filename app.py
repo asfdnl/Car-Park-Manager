@@ -1,91 +1,159 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash
-from supabase import create_client
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+import psycopg2
+import psycopg2.extras
+from supabase import create_client, Client
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()  # Load environment variables from .env if running locally
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "your-secret-key")
+app.secret_key = os.environ.get("SECRET_KEY", "dev")  # Replace in production
 
-# Supabase credentials from environment variables
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+def get_db_connection():
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+    return conn
 
 @app.route('/')
 def home():
-    return redirect(url_for('dashboard'))
+    if 'username' in session:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password))
+        user = cur.fetchone()
+        cur.close()
+        conn.close()
+        if user:
+            session['username'] = user['username']
+            session['user_role'] = user['role']
+            return redirect(url_for('dashboard'))
+        else:
+            flash("Invalid credentials", "danger")
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("Logged out successfully", "info")
+    return redirect(url_for('login'))
 
 @app.route('/dashboard')
 def dashboard():
-    owners_data = supabase.table("owners").select("*").execute()
-    vehicles_data = supabase.table("vehicles").select("*").execute()
+    if 'username' not in session:
+        return redirect(url_for('login'))
 
-    owners = owners_data.data if owners_data and owners_data.data else []
-    vehicles = vehicles_data.data if vehicles_data and vehicles_data.data else []
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT o.id as owner_id, o.name, o.office_location, o.email,
+               v.license_plate, v.vehicle_type
+        FROM owners o
+        LEFT JOIN vehicles v ON o.id = v.owner_id
+    ''')
+    data = cur.fetchall()
+    cur.close()
+    conn.close()
 
-    return render_template('dashboard.html', owners=owners, vehicles=vehicles)
+    return render_template('dashboard.html', data=data, user_role=session.get('user_role'))
 
-@app.route('/add_owner', methods=['POST'])
+@app.route('/add_owner', methods=['GET', 'POST'])
 def add_owner():
-    name = request.form['name']
-    office_location = request.form['office_location']
-    email = request.form['email']
+    if request.method == 'POST':
+        name = request.form['name']
+        office_location = request.form['office_location']
+        email = request.form['email']
+        contact_number = request.form['contact_number']
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO owners (name, office_location, email, contact_number) VALUES (%s, %s, %s, %s)",
+            (name, office_location, email, contact_number)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash("Owner added", "success")
+        return redirect(url_for('dashboard'))
 
-    result = supabase.table("owners").insert({
-        "name": name,
-        "office_location": office_location,
-        "email": email
-    }).execute()
+    return render_template('add_owner.html')  # Show the form on GET
 
-    if hasattr(result, "error") and result.error:
-        flash("Failed to add owner", "danger")
-    else:
-        flash("Owner added successfully", "success")
-
-    return redirect(url_for('dashboard'))
-
-@app.route('/add_vehicle', methods=['POST'])
+@app.route('/add_vehicle', methods=['GET', 'POST'])
 def add_vehicle():
-    license_plate = request.form['license_plate']
-    vehicle_type = request.form['vehicle_type']
-    owner_id = request.form['owner_id']
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    result = supabase.table("vehicles").insert({
-        "license_plate": license_plate,
-        "vehicle_type": vehicle_type,
-        "owner_id": owner_id
-    }).execute()
+    if request.method == 'POST':
+        license_plate = request.form['license_plate']
+        vehicle_type = request.form['vehicle_type']
+        owner_id = request.form['owner_id']
 
-    if hasattr(result, "error") and result.error:
-        flash("Failed to add vehicle", "danger")
-    else:
-        flash("Vehicle added successfully", "success")
+        cur.execute(
+            "INSERT INTO vehicles (license_plate, vehicle_type, owner_id) VALUES (%s, %s, %s)",
+            (license_plate, vehicle_type, owner_id)
+        )
+        conn.commit()
+        flash('Vehicle added successfully', 'success')
+        return redirect(url_for('dashboard'))
 
-    return redirect(url_for('dashboard'))
+    # GET method: fetch owners to populate the dropdown
+    cur.execute("SELECT id, name FROM owners ORDER BY name ASC")
+    owners = [dict(id=row[0], name=row[1]) for row in cur.fetchall()]
+    owners = [dict(id=row['id'], name=row['name']) for row in cur.fetchall()]
+    cur.close()
+    conn.close()
+
+    return render_template('add_vehicle.html', owners=owners)
+
 
 @app.route('/delete_vehicle/<license_plate>', methods=['POST'])
 def delete_vehicle(license_plate):
-    result = supabase.table("vehicles").delete().eq("license_plate", license_plate).execute()
-    if hasattr(result, "error") and result.error:
-        flash("Failed to delete vehicle", "danger")
-    else:
-        flash(f"Deleted vehicle {license_plate}", "warning")
-
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM vehicles WHERE license_plate = %s", (license_plate,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    flash(f"Deleted vehicle {license_plate}", "warning")
     return redirect(url_for('dashboard'))
 
 @app.route('/notify_owner/<license_plate>', methods=['POST'])
 def notify_owner(license_plate):
+    # Placeholder for actual notification logic (email, etc.)
     flash(f"Notification sent for vehicle {license_plate}", "info")
     return redirect(url_for('dashboard'))
 
+@app.route('/import-csv', methods=['GET', 'POST'])
+def import_csv():
+    if request.method == 'POST':
+        file = request.files.get('file')
+        if file and file.filename.endswith('.csv'):
+            # TODO: implement CSV parsing and DB insertion logic
+            flash("CSV uploaded successfully", "success")
+        else:
+            flash("Invalid file format. Please upload a .csv file.", "danger")
+    return render_template('import_csv.html')
+
 @app.route('/view-data')
 def view_data():
-    result = supabase.table("vehicles").select("*").execute()
-    vehicles = result.data if result and result.data else []
-    return render_template('view_data.html', vehicles=vehicles)
+    # Replace with actual logic to fetch vehicle and owner data
+    data = supabase.table('vehicles').select('*').execute().data
+    return render_template('view_data.html', data=data)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
