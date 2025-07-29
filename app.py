@@ -120,5 +120,12 @@ def import_csv():
             flash("Invalid file format. Please upload a .csv file.", "danger")
     return render_template('import_csv.html')
 
+@app.route('/view-data')
+def view_data():
+    # Replace with actual logic to fetch vehicle and owner data
+    data = supabase.table('vehicles').select('*').execute().data
+    return render_template('view_data.html', data=data)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
