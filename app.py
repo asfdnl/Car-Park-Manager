@@ -4,7 +4,7 @@ import psycopg2
 import psycopg2.extras
 from supabase import create_client, Client
 from dotenv import load_dotenv
-from utils import email_utils
+from utils.email_utils import send_email_notification
 
 load_dotenv()  # Load environment variables from .env if running locally
 
