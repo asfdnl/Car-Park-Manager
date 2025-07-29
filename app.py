@@ -133,7 +133,6 @@ def delete_vehicle(license_plate):
 from psycopg2.extras import RealDictCursor
 
 @app.route('/vehicle/notify/<license_plate>', methods=['POST'])
-@login_required
 def notify_owner(license_plate):
     if session['user_role'] != 'Admin':
         flash("Access denied: Admins only.", "danger")
