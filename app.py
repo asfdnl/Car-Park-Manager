@@ -149,10 +149,42 @@ def import_csv():
 
 @app.route('/view-data')
 def view_data():
-    # Replace with actual logic to fetch vehicle and owner data
-    data = supabase.table('vehicles').select('*').execute().data
-    return render_template('view_data.html', data=data)
+    search_plate = request.args.get('search_plate', '').strip()
+    
+    # Build Supabase query with JOIN
+    query = (
+        supabase
+        .from_('vehicles')
+        .select('license_plate, vehicle_type, owners(name, office_location, email, contact_number)')
+    )
 
+    # Apply filter if search is used
+    if search_plate:
+        query = query.ilike('license_plate', f'%{search_plate}%')
+
+    response = query.execute()
+
+    if response.error:
+        flash("Error fetching data", "danger")
+        data = []
+    else:
+        vehicles = response.data
+        # Flatten owner data into vehicle row
+        data = []
+        for v in vehicles:
+            owner = v.get('owners', {})
+            data.append({
+                'license_plate': v.get('license_plate'),
+                'vehicle_type': v.get('vehicle_type'),
+                'name': owner.get('name'),
+                'office_location': owner.get('office_location'),
+                'email': owner.get('email'),
+                'contact_number': owner.get('contact_number'),
+            })
+
+    user_role = session.get('role', 'Viewer')  # Or however you track role
+
+    return render_template('view_data.html', data=data, search_plate=search_plate, user_role=user_role)
 
 if __name__ == '__main__':
     app.run(debug=True)
