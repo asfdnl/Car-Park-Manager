@@ -112,7 +112,6 @@ def add_vehicle():
 
     # GET method: fetch owners to populate the dropdown
     cur.execute("SELECT id, name FROM owners ORDER BY name ASC")
-    owners = [dict(id=row[0], name=row[1]) for row in cur.fetchall()]
     owners = [dict(id=row['id'], name=row['name']) for row in cur.fetchall()]
     cur.close()
     conn.close()
