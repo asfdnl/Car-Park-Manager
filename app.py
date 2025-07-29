@@ -4,6 +4,8 @@ import psycopg2
 import psycopg2.extras
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from supabase.lib.client_options import ClientOptions
+from supabase.lib.types import APIResponse
 
 load_dotenv()  # Load environment variables from .env if running locally
 
@@ -150,39 +152,37 @@ def import_csv():
 @app.route('/view-data')
 def view_data():
     search_plate = request.args.get('search_plate', '').strip()
-    
-    # Build Supabase query with JOIN
+
+    # Supabase query with JOIN
     query = (
         supabase
         .from_('vehicles')
         .select('license_plate, vehicle_type, owners(name, office_location, email, contact_number)')
     )
 
-    # Apply filter if search is used
+    # Apply search filter if needed
     if search_plate:
         query = query.ilike('license_plate', f'%{search_plate}%')
 
-    response = query.execute()
+    response: APIResponse = query.execute()
 
-    if response.error:
-        flash("Error fetching data", "danger")
-        data = []
-    else:
-        vehicles = response.data
-        # Flatten owner data into vehicle row
-        data = []
-        for v in vehicles:
-            owner = v.get('owners', {})
-            data.append({
-                'license_plate': v.get('license_plate'),
-                'vehicle_type': v.get('vehicle_type'),
-                'name': owner.get('name'),
-                'office_location': owner.get('office_location'),
-                'email': owner.get('email'),
-                'contact_number': owner.get('contact_number'),
-            })
+    # Access the raw data
+    vehicles = response.data
 
-    user_role = session.get('role', 'Viewer')  # Or however you track role
+    # Flatten nested owners
+    data = []
+    for v in vehicles:
+        owner = v.get('owners', {})
+        data.append({
+            'license_plate': v.get('license_plate'),
+            'vehicle_type': v.get('vehicle_type'),
+            'name': owner.get('name'),
+            'office_location': owner.get('office_location'),
+            'email': owner.get('email'),
+            'contact_number': owner.get('contact_number'),
+        })
+
+    user_role = session.get('role', 'Viewer')
 
     return render_template('view_data.html', data=data, search_plate=search_plate, user_role=user_role)
 
