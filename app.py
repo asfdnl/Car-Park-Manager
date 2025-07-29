@@ -149,10 +149,31 @@ def import_csv():
 
 @app.route('/view-data')
 def view_data():
-    # Replace with actual logic to fetch vehicle and owner data
-    data = supabase.table('vehicles').select('*').execute().data
-    return render_template('view_data.html', data=data)
+    search_plate = request.args.get('search_plate', '').strip()
+    conn = get_db_connection()
+    cur = conn.cursor()
 
+    if search_plate:
+        cur.execute("""
+            SELECT o.name, o.office_location, o.email, o.contact_number,
+                   v.license_plate, v.vehicle_type
+            FROM owners o
+            LEFT JOIN vehicles v ON o.id = v.owner_id
+            WHERE v.license_plate ILIKE %s
+        """, (f"%{search_plate}%",))
+    else:
+        cur.execute("""
+            SELECT o.name, o.office_location, o.email, o.contact_number,
+                   v.license_plate, v.vehicle_type
+            FROM owners o
+            LEFT JOIN vehicles v ON o.id = v.owner_id
+        """)
+
+    data = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return render_template('view_data.html', data=data, user_role=session.get('user_role'), search_plate=search_plate)
 
 if __name__ == '__main__':
     app.run(debug=True)
