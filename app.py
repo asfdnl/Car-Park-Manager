@@ -71,20 +71,26 @@ def dashboard():
 
     return render_template('dashboard.html', data=data, user_role=session.get('user_role'))
 
-@app.route('/add_owner', methods=['POST'])
+@app.route('/add_owner', methods=['GET', 'POST'])
 def add_owner():
-    name = request.form['name']
-    office_location = request.form['office_location']
-    email = request.form['email']
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("INSERT INTO owners (name, office_location, email) VALUES (%s, %s, %s)", 
-                (name, office_location, email))
-    conn.commit()
-    cur.close()
-    conn.close()
-    flash("Owner added", "success")
-    return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        name = request.form['name']
+        office_location = request.form['office_location']
+        email = request.form['email']
+        contact_number = request.form['contact_number']
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO owners (name, office_location, email, contact_number) VALUES (%s, %s, %s, %s)",
+            (name, office_location, email, contact_number)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash("Owner added", "success")
+        return redirect(url_for('dashboard'))
+
+    return render_template('add_owner.html')  # Show the form on GET
 
 @app.route('/add_vehicle', methods=['POST'])
 def add_vehicle():
