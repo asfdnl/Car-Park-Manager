@@ -2,12 +2,15 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import psycopg2
 import psycopg2.extras
+from supabase import create_client, Client
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()  # Load environment variables from .env if running locally
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev")  # Replace in production
