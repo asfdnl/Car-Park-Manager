@@ -35,7 +35,7 @@ def login():
         password = request.form['password']
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password))
+        cur.execute("SELECT * FROM users WHERE username = %s AND password = extensions.crypt(%s, password)", (username, password))
         user = cur.fetchone()
         cur.close()
         conn.close()
